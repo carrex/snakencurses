@@ -1,13 +1,12 @@
-// gcc -o snake snake.c -lncurses
+// gcc -std=gnu99 -Wall -o snake snake.c -lncurses && ./snake
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <ncurses.h>
 
 #include "llist.h"
 
-#define DELAY 100000
+#define DELAY 300000
 
 enum Direction {
 	UP, DOWN, LEFT, RIGHT
@@ -15,20 +14,25 @@ enum Direction {
 
 void quit(void);
 
+LList snake;
+enum Direction dir;
+
 int main(int argc, char** argv)
 {
 	initscr();
-	noecho();     /* Don't echo keypresses           */
-	curs_set(0);  /* Don't display the cursor        */
-	cbreak();     /* Don't wait for CR to take input */
-	timeout(1); /* ms to wait for user input */
-	// nodelay(stdscr, false);
+	noecho();    /* Don't echo keypresses           */
+	curs_set(0); /* Don't display the cursor        */
+	cbreak();    /* Don't wait for CR to take input */
+	timeout(1);  /* ms to wait for user input       */
 
-	enum Direction dir = RIGHT;
-	LList* snake = llist_new((uint8_t[]){ 10, 10 });
-	llist_push(snake, (uint8_t[]){ 11, 10 });
-	llist_push(snake, (uint8_t[]){ 12, 10 });
+	dir = RIGHT;
+	LList snake = llist_new((short[]){ 10, 10 });
+	llist_push(snake, (short[]){ 9, 10 });
+	llist_push(snake, (short[]){ 8, 10 });
+	llist_push(snake, (short[]){ 7, 10 });
+	llist_push(snake, (short[]){ 6, 10 });
 
+	short px, py;
 	int c = 0;
 	while (true) {
 		clear();
@@ -36,19 +40,36 @@ int main(int argc, char** argv)
 		c = getch();
 		switch (c) {
 			case 'q': quit();
-			case 's': dir = DOWN;  break;
-			case 'w': dir = UP;    break;
-			case 'd': dir = RIGHT; break;
-			case 'a': dir = LEFT;  break;
+			case 'w': dir == RIGHT || dir == LEFT? dir = UP   : dir; break;
+			case 's': dir == RIGHT || dir == LEFT? dir = DOWN : dir; break;
+			case 'd': dir == UP    || dir == DOWN? dir = RIGHT: dir; break;
+			case 'a': dir == UP    || dir == DOWN? dir = LEFT : dir; break;
 		}
-		for (struct Node* n = snake; n->next; n = n->next) {
-			switch (dir) {
-				case RIGHT: n->data[0] += 1; break;
-				case LEFT : n->data[0] -= 1; break;
-				case UP   : n->data[1] -= 1; break;
-				case DOWN : n->data[1] += 1; break;
+
+		px = snake->data[0];
+		py = snake->data[1];
+		for (struct Node* n = snake; n; n = n->next) {
+			if (n->next) {
+				short tmpx = n->next->data[0];;
+				short tmpy = n->next->data[1];;
+				n->next->data[0] = px;
+				n->next->data[1] = py;
+				px = tmpx;
+				py = tmpy;
 			}
+		}
+		switch (dir) {
+			case RIGHT: snake->data[0] += 1; break;
+			case LEFT : snake->data[0] -= 1; break;
+			case UP   : snake->data[1] -= 1; break;
+			case DOWN : snake->data[1] += 1; break;
+		}
+
+		/* Draw the snake */
+		int i = 0;
+		for (struct Node* n = snake; n; n = n->next, i++) {
 			mvprintw(n->data[1], n->data[0], "o");
+			mvprintw(i, 0, "%d:%d", n->data[1], n->data[0]);
 		}
 
 		refresh();
