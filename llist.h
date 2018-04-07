@@ -14,6 +14,7 @@ typedef struct Node* LList;
 
 LList llist_new(short data[2]);
 void llist_push(LList head, short data[2]);
+void llist_insert(LList head, short data[2], int i);
 void llist_pop(LList head);
 void llist_free(LList head);
 
@@ -38,6 +39,19 @@ void llist_push(LList head, short data[2])
 	struct Node* n = head;
 	while (n->next) n = n->next;
 	n->next = node;
+}
+
+void llist_insert(LList head, short data[2], int i)
+{
+	struct Node* node = llist_new(data);
+	if (i == 0) {
+		/* Not implemented */
+	} else {
+		struct Node* n = head;
+		for (int j = 0; j < (i - 1) && n; j++, n = n->next);
+		node->next = n->next;
+		n->next = node;
+	}
 }
 
 void llist_pop(LList head)
